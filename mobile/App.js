@@ -5,6 +5,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/Ionicons';
+import { registerRootComponent } from 'expo';
 
 import { AuthProvider, AuthContext } from './src/context/AuthContext';
 import { COLORS } from './src/utils/theme';
@@ -14,6 +15,7 @@ import RegisterScreen from './src/screens/RegisterScreen';
 import ChatScreen from './src/screens/ChatScreen';
 import ConversationsScreen from './src/screens/ConversationsScreen';
 import ProfileScreen from './src/screens/ProfileScreen';
+import SplashLoader from './src/components/SplashLoader';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -32,8 +34,8 @@ const CustomDarkTheme = {
 
 function MainTabs() {
   return (
-      <AppTab.Navigator
-        screenOptions={({ route }) => ({
+    <Tab.Navigator
+      screenOptions={({ route }) => ({
         tabBarIcon: ({ focused, color, size }) => {
           let iconName;
 
@@ -60,9 +62,9 @@ function MainTabs() {
         },
       })}
     >
-      <AppTab.Screen name="Conversations" component={ConversationsScreen} options={{ title: 'Chats' }} />
-      <AppTab.Screen name="Profile" component={ProfileScreen} />
-    </AppTab.Navigator>
+      <Tab.Screen name="Conversations" component={ConversationsScreen} options={{ title: 'Chats' }} />
+      <Tab.Screen name="Profile" component={ProfileScreen} />
+    </Tab.Navigator>
   );
 }
 
@@ -70,7 +72,7 @@ function RootNavigator() {
   const { user, isLoading } = useContext(AuthContext);
 
   if (isLoading) {
-    return null; // Or a splash screen component
+    return <SplashLoader />;
   }
 
   return (
@@ -110,3 +112,6 @@ export default function App() {
     </SafeAreaProvider>
   );
 }
+
+// Ensure the root component is registered with React Native AppRegistry under "main"
+registerRootComponent(App);
