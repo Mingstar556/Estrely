@@ -1,0 +1,24 @@
+{
+  "name": "estrely-gateway",
+  "version": "1.0.0",
+  "description": "API Gateway for Project Beta Estrely",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.21.0",
+    "socket.io": "^4.7.5",
+    "cors": "^2.8.5",
+    "helmet": "^7.1.0",
+    "express-rate-limit": "^7.4.0",
+    "http-proxy-middleware": "^3.0.0",
+    "jsonwebtoken": "^9.0.2",
+    "dotenv": "^16.4.5",
+    "morgan": "^1.10.0",
+    "xss-clean": "^0.1.4",
+    "hpp": "^0.2.3",
+    "uuid": "^10.0.0"
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "name": "Estrely — AI Companion",
+  "short_name": "Estrely",
+  "description": "Your intelligent, emotionally aware luxury AI companion.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#050508",
+  "theme_color": "#050508",
+  "icons": [
+    {
+      "src": "assets/bot-avatar.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "assets/bot-avatar.svg",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml"
+    }
+  ],
+  "categories": ["utilities", "productivity", "social"]
+}
