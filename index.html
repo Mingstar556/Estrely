@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="theme-color" content="#050508">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="application-name" content="Estrely">
+    <title>Estrely — AI Companion</title>
+    <link rel="icon" type="image/svg+xml" href="assets/bot-avatar.svg">
+    <link rel="apple-touch-icon" href="assets/bot-avatar.svg">
+    <link rel="manifest" href="manifest.json">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <link rel="stylesheet" href="css/styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+</head>
+<body class="bg-ambient">
+    <!-- Opening Luxury Splash Animation -->
+    <div id="app-loader" class="app-loader">
+        <div class="loader-content">
+            <div class="loader-halo"></div>
+            <div class="loader-emblem">
+                <img src="assets/bot-avatar.svg" alt="Estrely" class="loader-logo">
+            </div>
+            <h1 class="loader-title">Estrely</h1>
+            <p class="loader-subtitle">Intelligent Luxury Companion</p>
+            <div class="loader-bar-wrap">
+                <div class="loader-bar-fill"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Interactive Constellation & Stardust Background Canvas -->
+    <canvas id="stardust-canvas"></canvas>
+
+    <!-- Mobile Drawer Overlay Backdrop -->
+    <div id="sidebar-backdrop" class="sidebar-backdrop"></div>
+
+    <div id="app" class="app-container">
+        <!-- Sidebar -->
+        <aside id="sidebar" class="sidebar">
+            <div class="sidebar-header">
+                <div class="brand">
+                    <div class="brand-logo-glow">
+                        <img src="assets/bot-avatar.svg" alt="Estrely Logo" class="brand-logo">
+                    </div>
+                    <div class="brand-text">
+                        <h1>Estrely</h1>
+                        <span class="brand-badge">PRO</span>
+                    </div>
+                </div>
+                <button id="mobile-close-btn" class="mobile-close-btn" aria-label="Close menu">&times;</button>
+            </div>
+            
+            <button id="new-chat-btn" class="new-chat-btn" title="Start a fresh chat (Ctrl+N)">
+                <span class="icon">+</span>
+                <span>New Chat</span>
+                <span class="shortcut-pill">Ctrl+N</span>
+            </button>
+
+            <!-- Search Conversations -->
+            <div class="sidebar-search-container">
+                <div class="search-input-wrapper">
+                    <svg class="search-icon" viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                    <input type="text" id="search-chats-input" placeholder="Search conversations..." autocomplete="off">
+                    <button id="clear-search-btn" class="clear-search-btn" style="display:none;" title="Clear search">&times;</button>
+                </div>
+            </div>
+            
+            <div class="conversation-list-container">
+                <div class="section-label">Recent Chats</div>
+                <ul id="conversation-list" class="conversation-list" role="list">
+                    <!-- Conversations injected via JS -->
+                </ul>
+                <div id="empty-search-state" class="empty-search-state" style="display: none;">
+                    <span>No conversations found</span>
+                </div>
+            </div>
+            
+            <div class="sidebar-footer">
+                <div class="user-profile">
+                    <div class="user-avatar" id="user-initials">U</div>
+                    <div class="user-info">
+                        <span id="current-username" class="username">Guest</span>
+                        <span id="current-email" class="email">guest@example.com</span>
+                    </div>
+                    <div class="footer-actions">
+                        <button id="clear-all-btn" class="icon-btn" title="Clear all chat history">
+                            <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                        </button>
+                        <button id="logout-btn" class="icon-btn" title="Log out">
+                            <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Chat Area -->
+        <main class="main-chat">
+            <header class="chat-header">
+                <button id="mobile-menu-btn" class="mobile-menu-btn" aria-label="Open menu">
+                    <svg viewBox="0 0 24 24" width="22" height="22" stroke="currentColor" stroke-width="2" fill="none"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+                </button>
+                <div class="chat-title-group">
+                    <h2 id="current-chat-title">New Conversation</h2>
+                    <button id="rename-chat-btn" class="icon-btn rename-btn" title="Rename conversation" style="display:none;">
+                        <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                    </button>
+                </div>
+                <div class="header-right-actions">
+                    <button id="sound-toggle-btn" class="icon-btn sound-btn" title="Toggle audio feedback">
+                        <svg id="sound-icon-on" viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
+                        <svg id="sound-icon-off" viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" style="display:none;"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><line x1="23" y1="9" x2="17" y2="15"></line><line x1="17" y1="9" x2="23" y2="15"></line></svg>
+                    </button>
+                    <div id="connection-status" class="status-indicator status-connected" title="Estrely Online"></div>
+                </div>
+            </header>
+            
+            <div id="chat-messages" class="chat-messages" aria-live="polite">
+                <!-- Welcome Screen / Hero -->
+                <div class="welcome-screen">
+                    <div class="welcome-pill">
+                        <span class="sparkle">✦</span>
+                        <span>Gemini 3.5 Emotional Intelligence</span>
+                    </div>
+                    <div class="welcome-avatar-container">
+                        <div class="avatar-halo"></div>
+                        <img src="assets/bot-avatar.svg" alt="Estrely" class="welcome-logo">
+                    </div>
+                    <h2 id="welcome-greeting">Hello, I'm Estrely</h2>
+                    <p class="welcome-desc">Your warm, intuitive AI companion. Ask me anything, brainstorm ideas, write stories, or debug complex code.</p>
+                    
+                    <!-- Starter Cards Grid -->
+                    <div class="starter-cards-grid">
+                        <button class="starter-card" data-prompt="Give me 5 creative ideas for a futuristic mobile app that enhances well-being">
+                            <span class="card-icon">💡</span>
+                            <div class="card-text">
+                                <span class="card-title">Brainstorm Ideas</span>
+                                <span class="card-subtitle">Futuristic mobile app concepts</span>
+                            </div>
+                        </button>
+                        <button class="starter-card" data-prompt="Write a short, heartwarming sci-fi story about a stargazer who accidentally befriends an AI satellite">
+                            <span class="card-icon">✍️</span>
+                            <div class="card-text">
+                                <span class="card-title">Creative Story</span>
+                                <span class="card-subtitle">Heartwarming sci-fi fiction</span>
+                            </div>
+                        </button>
+                        <button class="starter-card" data-prompt="Explain how async/await works under the hood with clear Python and JavaScript code examples">
+                            <span class="card-icon">💻</span>
+                            <div class="card-text">
+                                <span class="card-title">Code & Architecture</span>
+                                <span class="card-subtitle">Async/await under the hood</span>
+                            </div>
+                        </button>
+                        <button class="starter-card" data-prompt="I've had a really busy and fast-paced day. Let's have a calming, mindful chat to unwind.">
+                            <span class="card-icon">✨</span>
+                            <div class="card-text">
+                                <span class="card-title">Mindful Chat</span>
+                                <span class="card-subtitle">Unwind and talk through your thoughts</span>
+                            </div>
+                        </button>
+                    </div>
+                </div>
+                <!-- Dynamic messages injected here -->
+            </div>
+
+            <!-- Scroll to bottom button -->
+            <button id="scroll-bottom-btn" class="scroll-bottom-btn" aria-label="Scroll to bottom" title="Scroll to latest message">
+                <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2.5" fill="none"><line x1="12" y1="5" x2="12" y2="19"></line><polyline points="19 12 12 19 5 12"></polyline></svg>
+            </button>
+            
+            <!-- Chat Input Area -->
+            <div class="chat-input-container">
+                <div class="input-wrapper">
+                    <textarea id="message-input" placeholder="Message Estrely... (Shift+Enter for new line)" rows="1" aria-label="Message input"></textarea>
+                    <div class="input-actions">
+                        <button id="stop-btn" class="stop-btn" style="display:none;" title="Stop generating">
+                            <span class="stop-square"></span>
+                        </button>
+                        <button id="send-btn" class="send-btn" aria-label="Send message" title="Send message (Enter)">
+                            <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2.5" fill="none"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                        </button>
+                    </div>
+                </div>
+                <div class="input-footer">
+                    <span id="char-counter">0 / 10,000</span>
+                    <span class="keyboard-hint">Press <kbd>Enter</kbd> to send, <kbd>Shift</kbd>+<kbd>Enter</kbd> for new line</span>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Rename Conversation Modal -->
+    <div id="rename-modal" class="modal-overlay">
+        <div class="modal-content glass rename-modal-content">
+            <h3>Rename Chat</h3>
+            <p>Give this conversation a descriptive title:</p>
+            <form id="rename-form">
+                <div class="form-group">
+                    <input type="text" id="rename-input" required maxlength="60" placeholder="Conversation title">
+                </div>
+                <div class="modal-btn-row">
+                    <button type="button" id="cancel-rename-btn" class="btn btn-secondary">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Title</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Login/Register Modal -->
+    <div id="auth-modal" class="modal-overlay">
+        <div class="modal-content glass">
+            <div class="modal-header">
+                <div class="modal-logo-halo">
+                    <img src="assets/bot-avatar.svg" alt="Estrely" class="modal-logo">
+                </div>
+                <h2>Welcome to Estrely</h2>
+                <p>Your emotionally intelligent AI companion</p>
+            </div>
+            
+            <div class="auth-tabs">
+                <button id="tab-login" class="tab-btn active">Log In</button>
+                <button id="tab-register" class="tab-btn">Register</button>
+            </div>
+            
+            <form id="login-form" class="auth-form active">
+                <div class="form-group">
+                    <label for="login-username">Username or Email</label>
+                    <input type="text" id="login-username" required autocomplete="username" placeholder="Enter username or email">
+                </div>
+                <div class="form-group">
+                    <label for="login-password">Password</label>
+                    <input type="password" id="login-password" required autocomplete="current-password" placeholder="Enter password">
+                </div>
+                <div id="login-error" class="error-message"></div>
+                <button type="submit" class="btn btn-primary btn-block">Log In</button>
+            </form>
+            
+            <form id="register-form" class="auth-form">
+                <div class="form-group">
+                    <label for="reg-username">Username</label>
+                    <input type="text" id="reg-username" required autocomplete="username" placeholder="Choose a username">
+                </div>
+                <div class="form-group">
+                    <label for="reg-email">Email</label>
+                    <input type="email" id="reg-email" required autocomplete="email" placeholder="name@example.com">
+                </div>
+                <div class="form-group">
+                    <label for="reg-password">Password</label>
+                    <input type="password" id="reg-password" required autocomplete="new-password" placeholder="Create a secure password">
+                </div>
+                <div id="reg-error" class="error-message"></div>
+                <button type="submit" class="btn btn-primary btn-block">Create Account</button>
+            </form>
+
+            <div class="auth-divider">
+                <span>or</span>
+            </div>
+
+            <button type="button" id="guest-login-btn" class="btn btn-guest-pill">
+                <span class="guest-sparkle">✦</span>
+                <span>Continue as Guest (No Sign-in)</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Guest Account Warning Modal -->
+    <div id="guest-warning-modal" class="modal-overlay">
+        <div class="modal-content glass guest-modal-content">
+            <div class="modal-header">
+                <div class="guest-warning-badge">
+                    <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2.5" fill="none"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+                    <span>Guest Mode Limitations</span>
+                </div>
+                <h2>Explore as Guest</h2>
+                <p>Important limitations apply to temporary guest sessions:</p>
+            </div>
+            
+            <div class="guest-warning-list">
+                <div class="guest-warn-item">
+                    <div class="warn-item-icon">🔒</div>
+                    <div class="warn-item-text">
+                        <strong>No Data Recorded</strong>
+                        <span>Your chat messages and conversations will NOT be saved to the database. Refreshing or closing the tab clears your history.</span>
+                    </div>
+                </div>
+                <div class="guest-warn-item">
+                    <div class="warn-item-icon">🚫</div>
+                    <div class="warn-item-text">
+                        <strong>Cannot Create New Chats</strong>
+                        <span>Guests are limited to one active temporary session. Creating multiple conversations requires an account.</span>
+                    </div>
+                </div>
+                <div class="guest-warn-item">
+                    <div class="warn-item-icon">✨</div>
+                    <div class="warn-item-text">
+                        <strong>Full AI Capabilities</strong>
+                        <span>You can still experience Estrely's emotional intelligence, code syntax highlighting, and audio voice synthesis!</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-btn-row guest-btn-row">
+                <button type="button" id="cancel-guest-btn" class="btn btn-secondary">Back to Login</button>
+                <button type="button" id="confirm-guest-btn" class="btn btn-primary">I Understand, Let's Chat</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slick Inactivity / Welcome Back Notification Container -->
+    <div id="inactivity-notification-container" class="inactivity-notification-container"></div>
+
+    <!-- Luxury Cookie & Privacy Consent Banner -->
+    <div id="cookie-banner" class="cookie-banner" role="dialog" aria-labelledby="cookie-heading" style="display: none;">
+        <div class="cookie-content">
+            <div class="cookie-badge-icon">
+                <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 2a10 10 0 1 0 10 10 4 4 0 0 1-5-5 4 4 0 0 1-5-5"></path>
+                    <circle cx="8.5" cy="8.5" r="1.5" fill="currentColor"></circle>
+                    <circle cx="7" cy="14" r="1" fill="currentColor"></circle>
+                    <circle cx="15.5" cy="15.5" r="1" fill="currentColor"></circle>
+                    <circle cx="12" cy="12" r="1" fill="currentColor"></circle>
+                </svg>
+            </div>
+            <div class="cookie-info">
+                <div class="cookie-header-row">
+                    <h4 id="cookie-heading" class="cookie-title">Cookie & Session Notice</h4>
+                    <span class="cookie-privacy-pill">PRIVACY FIRST</span>
+                </div>
+                <p class="cookie-desc">
+                    Estrely uses essential cookies and local session storage to keep your login secure, retain active conversation preferences, and optimize speed. We never sell your personal data or run intrusive tracker ads.
+                </p>
+            </div>
+            <div class="cookie-actions">
+                <button type="button" id="cookie-essential-btn" class="cookie-btn cookie-btn-subtle">Essential Only</button>
+                <button type="button" id="cookie-accept-btn" class="cookie-btn cookie-btn-gold">Accept All</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification Container -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <!-- Application Scripts -->
+    <script src="js/stardust.js"></script>
+    <script src="js/markdown.js"></script>
+    <script src="js/audio.js"></script>
+    <script src="js/notification.js"></script>
+    <script src="js/config.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/socket.js"></script>
+    <script src="js/chat.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
