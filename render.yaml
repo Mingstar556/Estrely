@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: estrely
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn --chdir server/python app:app --bind 0.0.0.0:$PORT
+    envVars:
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: PYTHON_PORT
+        value: 10000

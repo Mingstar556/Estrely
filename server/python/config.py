@@ -11,4 +11,4 @@ class Config:
     DAILY_TOKEN_LIMIT = int(os.getenv('DAILY_TOKEN_LIMIT', '100000'))
     MONTHLY_TOKEN_LIMIT = int(os.getenv('MONTHLY_TOKEN_LIMIT', '2000000'))
     ENCRYPTION_KEY = os.getenv('ENCRYPTION_KEY', 'a' * 32)
-    PYTHON_PORT = int(os.getenv('PYTHON_PORT', '5000'))
+    PYTHON_PORT = int(os.getenv('PORT', os.getenv('PYTHON_PORT', '5000')))

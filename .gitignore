@@ -43,6 +43,8 @@ build/
 dist/
 *.log
 
-# System
+# System & binaries
 .DS_Store
 Thumbs.db
+*.exe
+cloudflared.exe
