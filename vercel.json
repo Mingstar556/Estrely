@@ -1,0 +1,11 @@
+{
+  "version": 2,
+  "outputDirectory": "pc",
+  "cleanUrls": true,
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/pc/$1"
+    }
+  ]
+}
