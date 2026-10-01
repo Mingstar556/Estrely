@@ -36,6 +36,10 @@ class ApiClient {
             return data;
         } catch (error) {
             console.error('API Error:', error);
+            if (error instanceof TypeError && error.message.includes('fetch')) {
+                window.dispatchEvent(new CustomEvent('estrely:server_disconnected'));
+                throw new Error('Cannot connect to your live Estrely server. Please check your connection.');
+            }
             throw error;
         }
     }
@@ -91,6 +95,10 @@ class ApiClient {
             return data;
         } catch (error) {
             console.error('Guest API Error:', error);
+            if (error instanceof TypeError && error.message.includes('fetch')) {
+                window.dispatchEvent(new CustomEvent('estrely:server_disconnected'));
+                throw new Error('Cannot connect to your live Estrely server. Please check your connection.');
+            }
             throw error;
         }
     }

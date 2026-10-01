@@ -265,14 +265,159 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // ==========================================
+    // Server Connection & Dynamic Bridge Manager
+    // ==========================================
+    const serverModal = document.getElementById('server-modal');
+    const serverBtn = document.getElementById('connection-status-btn');
+    const serverStatusDot = document.getElementById('connection-status');
+    const serverStatusLabel = document.getElementById('server-status-label');
+    const serverUrlInput = document.getElementById('server-url-input');
+    const testConnectBtn = document.getElementById('test-connect-btn');
+    const resetServerBtn = document.getElementById('reset-server-btn');
+    const closeServerModalBtn = document.getElementById('close-server-modal-btn');
+    const modalServerStatus = document.getElementById('modal-server-status');
+    const serverErrorMsg = document.getElementById('server-error-msg');
+
+    const updateServerIndicator = async () => {
+        if (!CONFIG.hasServer()) {
+            if (serverStatusDot) {
+                serverStatusDot.className = 'status-indicator status-disconnected';
+                serverStatusDot.title = 'No live server connected — Click to connect';
+            }
+            if (serverStatusLabel) serverStatusLabel.textContent = 'Disconnected';
+            return;
+        }
+
+        if (serverStatusDot) {
+            serverStatusDot.className = 'status-indicator status-connecting';
+            serverStatusDot.title = 'Checking server health...';
+        }
+        if (serverStatusLabel) serverStatusLabel.textContent = 'Checking...';
+
+        const isHealthy = await CONFIG.checkHealth();
+        if (isHealthy) {
+            if (serverStatusDot) {
+                serverStatusDot.className = 'status-indicator status-connected';
+                serverStatusDot.title = `Estrely Online (${CONFIG.SERVER_BASE})`;
+            }
+            if (serverStatusLabel) serverStatusLabel.textContent = 'Live';
+        } else {
+            if (serverStatusDot) {
+                serverStatusDot.className = 'status-indicator status-disconnected';
+                serverStatusDot.title = `Server unreachable at ${CONFIG.SERVER_BASE}`;
+            }
+            if (serverStatusLabel) serverStatusLabel.textContent = 'Offline';
+        }
+    };
+
+    const openServerModal = () => {
+        if (!serverModal) return;
+        if (serverUrlInput) {
+            serverUrlInput.value = CONFIG.SERVER_BASE;
+        }
+        if (serverErrorMsg) serverErrorMsg.textContent = '';
+        if (resetServerBtn) {
+            resetServerBtn.style.display = localStorage.getItem('estrely_backend_url') ? 'inline-block' : 'none';
+        }
+        if (modalServerStatus) {
+            const hasSrv = CONFIG.hasServer();
+            modalServerStatus.innerHTML = hasSrv 
+                ? `<span class="status-dot status-connected"></span><span>Target: <strong>${CONFIG.SERVER_BASE}</strong></span>`
+                : `<span class="status-dot status-disconnected"></span><span>No backend connected yet.</span>`;
+        }
+        serverModal.classList.add('active');
+    };
+
+    const closeServerModal = () => {
+        if (serverModal) serverModal.classList.remove('active');
+    };
+
+    if (serverBtn) {
+        serverBtn.addEventListener('click', openServerModal);
+    }
+    if (closeServerModalBtn) {
+        closeServerModalBtn.addEventListener('click', closeServerModal);
+    }
+    if (serverModal) {
+        serverModal.addEventListener('click', (e) => {
+            if (e.target === serverModal) closeServerModal();
+        });
+    }
+
+    if (testConnectBtn) {
+        testConnectBtn.addEventListener('click', async () => {
+            const inputVal = (serverUrlInput?.value || '').trim();
+            if (!inputVal) {
+                if (serverErrorMsg) serverErrorMsg.textContent = 'Please enter a server URL (e.g. your Cloudflare Tunnel link).';
+                return;
+            }
+            testConnectBtn.disabled = true;
+            testConnectBtn.textContent = 'Testing...';
+            if (serverErrorMsg) serverErrorMsg.textContent = '';
+
+            const isOk = await CONFIG.checkHealth(inputVal);
+            testConnectBtn.disabled = false;
+            testConnectBtn.textContent = 'Test & Connect';
+
+            if (isOk) {
+                CONFIG.setServer(inputVal);
+                if (modalServerStatus) {
+                    modalServerStatus.innerHTML = `<span class="status-dot status-connected"></span><span>Connected to <strong>${CONFIG.SERVER_BASE}</strong>!</span>`;
+                }
+                updateServerIndicator();
+                setTimeout(() => {
+                    closeServerModal();
+                    if (window.chatManager) {
+                        window.chatManager.showToast('Connected to live server!', 'success');
+                    }
+                }, 800);
+            } else {
+                if (serverErrorMsg) {
+                    serverErrorMsg.textContent = 'Could not reach server. Verify that your server is running (e.g., START_LIVE_WEBSITE.bat) and the link is active.';
+                }
+            }
+        });
+    }
+
+    if (resetServerBtn) {
+        resetServerBtn.addEventListener('click', () => {
+            CONFIG.setServer('');
+            if (serverUrlInput) serverUrlInput.value = '';
+            updateServerIndicator();
+            if (modalServerStatus) {
+                modalServerStatus.innerHTML = `<span class="status-dot status-disconnected"></span><span>Reset to default origin.</span>`;
+            }
+            if (resetServerBtn) resetServerBtn.style.display = 'none';
+        });
+    }
+
+    // Window event for API client when server is disconnected
+    window.addEventListener('estrely:server_disconnected', () => {
+        openServerModal();
+    });
+
+    // Check health on initial load
+    updateServerIndicator();
+
+    // If on static hosting without configured server, gently notify
+    if (CONFIG.isStaticHosting && !CONFIG.hasServer()) {
+        setTimeout(() => {
+            if (window.chatManager) {
+                window.chatManager.showToast('Please connect your live server using the status pill at the top.', 'info');
+            }
+        }, 1500);
+    }
+
+    // ==========================================
     // Progressive Web App (PWA) Service Worker
     // ==========================================
     if ('serviceWorker' in navigator && window.location.protocol.startsWith('http')) {
         window.addEventListener('load', () => {
-            navigator.serviceWorker.register('/sw.js').catch((err) => {
+            navigator.serviceWorker.register('sw.js').catch((err) => {
                 console.log('PWA ServiceWorker registration info:', err.message);
             });
         });
     }
 });
+
 
