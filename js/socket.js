@@ -10,8 +10,9 @@ class SocketManager {
         this.socket = io(`${CONFIG.WS_URL}/chat`, {
             auth: { token },
             reconnection: true,
-            reconnectionAttempts: 5,
-            reconnectionDelay: 1000
+            reconnectionAttempts: 1,
+            reconnectionDelay: 2000,
+            timeout: 3000
         });
 
         this.setupEvents();
@@ -25,12 +26,12 @@ class SocketManager {
 
         this.socket.on('disconnect', () => {
             console.log('Socket disconnected');
-            this.setStatus('disconnected');
         });
 
-        this.socket.on('connect_error', (error) => {
-            console.error('Socket connection error:', error);
-            this.setStatus('disconnected');
+        this.socket.on('connect_error', () => {
+            if (this.socket && this.socket.io) {
+                this.socket.io.opts.reconnection = false;
+            }
         });
     }
 

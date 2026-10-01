@@ -1,4 +1,4 @@
-const CACHE_NAME = 'estrely-cache-v1.1';
+const CACHE_NAME = 'estrely-cache-v1.3';
 const STATIC_ASSETS = [
     './',
     './index.html',
