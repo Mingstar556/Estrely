@@ -58,7 +58,7 @@
             if (!testBase) return false;
             try {
                 const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 6000);
+                const timeoutId = setTimeout(() => controller.abort(), 2500);
                 const res = await fetch(`${testBase}/api/health`, {
                     method: 'GET',
                     signal: controller.signal
