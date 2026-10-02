@@ -6,7 +6,7 @@ from config import Config
 class GeminiService:
     def __init__(self):
         self.client = genai.Client(api_key=Config.GEMINI_API_KEY)
-        self.model = os.getenv('GEMINI_CHAT_MODEL', 'gemini-3.5-flash-lite')
+        self.model = os.getenv('GEMINI_CHAT_MODEL', 'gemini-3.5-flash')
         self.system_instruction = """You are Estrely, a warm, emotionally intelligent AI companion. You respond naturally like a human friend — with empathy, humor, curiosity, and genuine care.
 
 Your personality traits:

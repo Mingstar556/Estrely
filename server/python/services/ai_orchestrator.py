@@ -29,8 +29,8 @@ class AIOrchestrator:
             except Exception:
                 self.gemini_client = None
 
-        self.gemini_model = os.getenv('GEMINI_CHAT_MODEL', 'gemma-4-26b-a4b-it')
-        self.gemini_backup_models = ['gemini-robotics-er-2-preview', 'gemini-3.6-flash']
+        self.gemini_model = os.getenv('GEMINI_CHAT_MODEL', 'gemini-3.5-flash')
+        self.gemini_backup_models = ['gemini-3.5-flash-lite', 'gemini-3.8-flash', 'gemini-3.6-flash']
         self.openai_key = os.getenv('OPENAI_API_KEY', '')
         if self.openai_key in ['your-openai-api-key-here', '', None]:
             self.openai_key = None
@@ -100,29 +100,35 @@ class AIOrchestrator:
         now = time.time()
         can_try_gemini = (self.gemini_client is not None and now >= self.gemini_cooldown_until)
 
-        # 2. Race Primary AI (Gemini) and Secondary AI in parallel for maximum speed
-        from concurrent.futures import as_completed
-        futures = []
+        # 2. Try Primary AI (Google Gemini) first
         if can_try_gemini:
-            futures.append(self.thread_pool.submit(self._try_gemini, augmented_prompt, conversation_history))
-        futures.append(self.thread_pool.submit(self._try_secondary_ai, augmented_prompt, conversation_history))
+            try:
+                gemini_text, gemini_usage = self._try_gemini(augmented_prompt, conversation_history)
+                if gemini_text and len(gemini_text.strip()) > 5:
+                    raw_response_text = gemini_text
+                    token_usage = gemini_usage or {}
+                    source_model = 'estrely-gemini'
+                    self.gemini_consecutive_failures = 0
+                else:
+                    self.gemini_consecutive_failures += 1
+            except Exception:
+                self.gemini_consecutive_failures += 1
 
-        # First valid response wins
-        try:
-            for f in as_completed(futures, timeout=12.0):
-                try:
-                    res_text, usage = f.result()
-                    if res_text and len(res_text.strip()) > 5:
-                        raw_response_text = res_text
-                        token_usage = usage or {}
-                        source_model = 'hybrid-ai'
-                        break
-                except Exception:
-                    continue
-        except Exception:
-            pass
+            if self.gemini_consecutive_failures >= 3:
+                self.gemini_cooldown_until = now + 60
 
-        # 3. Candidate 3: Smart Local Persona Fallback (Ensures 100% uptime with zero error cards)
+        # 3. Fallback to Secondary AI (OpenAI / Gateway) if Gemini didn't respond
+        if not raw_response_text:
+            try:
+                sec_text, sec_usage = self._try_secondary_ai(augmented_prompt, conversation_history)
+                if sec_text and len(sec_text.strip()) > 5:
+                    raw_response_text = sec_text
+                    token_usage = sec_usage or {}
+                    source_model = 'estrely-secondary'
+            except Exception:
+                pass
+
+        # 4. Fallback to Smart Local Persona Fallback (Ensures 100% uptime with zero error cards)
         if not raw_response_text:
             raw_response_text = self._generate_local_fallback(user_message, search_context)
             source_model = 'estrely-local-fallback'
@@ -167,11 +173,16 @@ class AIOrchestrator:
         cfg = types.GenerateContentConfig(
             system_instruction=self.system_instruction,
             temperature=0.85,
-            max_output_tokens=700,
+            max_output_tokens=2048,
             top_p=0.92
         )
 
-        models_to_try = [self.gemini_model] + self.gemini_backup_models
+        seen_models = set()
+        models_to_try = []
+        for m in [self.gemini_model] + self.gemini_backup_models:
+            if m and m not in seen_models:
+                seen_models.add(m)
+                models_to_try.append(m)
         for m in models_to_try:
             try:
                 resp = self.gemini_client.models.generate_content(

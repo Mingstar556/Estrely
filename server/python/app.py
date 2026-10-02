@@ -1,4 +1,14 @@
 import os
+import sys
+
+# Ensure UTF-8 output encoding on Windows consoles
+if hasattr(sys.stdout, 'reconfigure'):
+    try:
+        sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+        sys.stderr.reconfigure(encoding='utf-8', errors='replace')
+    except Exception:
+        pass
+
 from flask import Flask, jsonify, send_from_directory
 from flask_cors import CORS
 from config import Config
@@ -56,4 +66,5 @@ def server_error(e):
     return jsonify({'error': 'Internal server error'}), 500
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=Config.PYTHON_PORT, debug=True)
+    is_debug = os.getenv('FLASK_DEBUG', 'False').lower() in ('true', '1', 't')
+    app.run(host='0.0.0.0', port=Config.PYTHON_PORT, debug=is_debug)

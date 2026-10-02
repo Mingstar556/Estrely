@@ -48,3 +48,11 @@ dist/
 Thumbs.db
 *.exe
 cloudflared.exe
+
+# Agent & AI editor workspaces
+.agents/
+.claude/
+agent/
+skills-lock.json
+.netlify/
+
