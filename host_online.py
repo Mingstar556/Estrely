@@ -105,16 +105,18 @@ def main():
 
     local_ip = get_local_ip()
 
-    if public_url:
         github_pages_url = f"https://mingstar556.github.io/Estrely/?server={public_url}"
+        netlify_url = f"https://graceful-creponne-e31093.netlify.app/?server={public_url}"
 
         print("*" * 68)
         print("  ESTRELY IS NOW LIVE ON THE INTERNET (FAST EDGE ROUTING)!")
         print("*" * 68)
-        print("\n  -> PUBLIC FRONTEND LINK (GitHub Pages live with your server):")
-        print(f"     {github_pages_url}")
+        print("\n  -> NETLIFY LIVE LINK (Netlify Frontend linked to your PC):")
+        print(f"     {netlify_url}")
         print("\n  -> DIRECT CLOUDFLARE TUNNEL LINK (Full-Stack direct to laptop):")
         print(f"     {public_url}")
+        print("\n  -> GITHUB PAGES LINK:")
+        print(f"     {github_pages_url}")
         print("\n  -> LOCAL WI-FI LINK (Devices on your home Wi-Fi):")
         print(f"     http://{local_ip}:5000")
         print("\n" + "-" * 68)
